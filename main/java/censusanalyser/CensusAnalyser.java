@@ -8,10 +8,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.StreamSupport;
 
 public class CensusAnalyser {
@@ -19,6 +16,11 @@ public class CensusAnalyser {
 
     public CensusAnalyser() {
         this.censusList = new ArrayList<IndiaCensusDAO>();
+    }
+
+    Map<String,IndiaCensusDAO> censusStateMap = null;
+    public CensusAnalyser() {
+        censusStateMap = new HashMap<>();
     }
 
     public int loadStateCensusData(String csvFilePath) throws CensusAnalyserException {
@@ -43,8 +45,12 @@ public class CensusAnalyser {
     public int loadIndianStateCode(String csvFilePath) throws CensusAnalyserException {
         try (Reader reader = Files.newBufferedReader(Paths.get(csvFilePath));) {
             ICSVBuilder csvBuilder = CSVBuilderFactory.createCSVBuilder();
-            Iterator<IndianStateCodeCSV> stateCodeCSVIterator = csvBuilder.getCSVFileIterator(reader,IndianStateCodeCSV.class);
-            return this.getCount(stateCodeCSVIterator);
+            Iterator<IndianStateCodeCSV> stateCSVIterator = csvBuilder.getCSVFileIterator(reader,IndianStateCodeCSV.class);
+            Iterator<IndianStateCodeCSV> csvIterable = () -> stateCSVIterator;
+            StreamSupport.stream(csvIterable.spliterator(),false)
+                    .filter(csvState -> censusStateMap.get(csvState.state) != null)
+                    .forEach(csvState -> censusStateMap.get(csvState.state).stateCode = csvState.stateCode);
+            return censusStateMap.size();
         } catch (IOException e) {
             throw new CensusAnalyserException(e.getMessage(),
                     CensusAnalyserException.ExceptionType.CENSUS_FILE_PROBLEM);
