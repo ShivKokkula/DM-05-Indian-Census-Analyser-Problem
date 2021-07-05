@@ -13,12 +13,8 @@ import java.util.stream.StreamSupport;
 
 public class CensusAnalyser {
     List<IndiaCensusDAO> censusList = null;
-
-    public CensusAnalyser() {
-        this.censusList = new ArrayList<IndiaCensusDAO>();
-    }
-
     Map<String,IndiaCensusDAO> censusStateMap = null;
+
     public CensusAnalyser() {
         censusStateMap = new HashMap<>();
     }
@@ -46,10 +42,10 @@ public class CensusAnalyser {
         try (Reader reader = Files.newBufferedReader(Paths.get(csvFilePath));) {
             ICSVBuilder csvBuilder = CSVBuilderFactory.createCSVBuilder();
             Iterator<IndianStateCodeCSV> stateCSVIterator = csvBuilder.getCSVFileIterator(reader,IndianStateCodeCSV.class);
-            Iterator<IndianStateCodeCSV> csvIterable = () -> stateCSVIterator;
+            Iterable<IndianStateCodeCSV> csvIterable = () -> stateCSVIterator;
             StreamSupport.stream(csvIterable.spliterator(),false)
                     .filter(csvState -> censusStateMap.get(csvState.state) != null)
-                    .forEach(csvState -> censusStateMap.get(csvState.state).stateCode = csvState.stateCode);
+                    .forEach(csvState -> censusStateMap.get(csvState.state).stateCode = csvState.StateCode);
             return censusStateMap.size();
         } catch (IOException e) {
             throw new CensusAnalyserException(e.getMessage(),
